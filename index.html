@@ -382,6 +382,9 @@
     .cat-tag.cat-learning { background: rgba(255,204,128,0.15); color: var(--orange); }
     .cat-tag.cat-other { background: rgba(244,143,177,0.15); color: var(--pink); }
     .goal-time { font-size: 0.72rem; color: var(--muted); }
+    .goal-due { font-size: 0.72rem; color: var(--muted); }
+    .goal-due.overdue { color: var(--red); font-weight: 600; }
+    .goal-due.due-today { color: var(--orange); font-weight: 600; }
     .goal-owner { font-size: 0.72rem; color: var(--muted); }
 
     /* Actions */
@@ -598,6 +601,7 @@
         <option value="other">✨ Other</option>
       </select>
       <input type="time" id="time-input" class="time-input" title="Set a reminder time (visual only)" />
+      <input type="date" id="due-date-input" class="time-input" title="Set a deadline" />
       <button class="btn-add" onclick="addGoal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Goal
@@ -614,6 +618,7 @@
     <button class="filter-btn" onclick="setFilter('learning', this)">📚 Learning</button>
     <button class="filter-btn" onclick="setFilter('other', this)">✨ Other</button>
     <button class="filter-btn" onclick="setFilter('done', this)">✅ Completed</button>
+    <button class="filter-btn" onclick="setFilter('overdue', this)">🔴 Overdue</button>
   </div>
 
   <!-- Goals List -->
@@ -791,6 +796,7 @@
       title,
       category: document.getElementById('cat-select').value,
       time: document.getElementById('time-input').value || null,
+      dueDate: document.getElementById('due-date-input').value || null,
       done: false,
       owner: 'you',
       createdAt: Date.now(),
@@ -799,6 +805,7 @@
     saveGoals();
     input.value = '';
     document.getElementById('time-input').value = '';
+    document.getElementById('due-date-input').value = '';
     renderGoals();
     updateProgress();
     showToast('Goal added! 🎯');
@@ -868,6 +875,7 @@
     const list = document.getElementById('goals-list');
     let filtered = goals;
     if (currentFilter === 'done') filtered = goals.filter(g => g.done);
+    else if (currentFilter === 'overdue') filtered = goals.filter(g => !g.done && g.dueDate && g.dueDate < TODAY);
     else if (currentFilter !== 'all') filtered = goals.filter(g => g.category === currentFilter);
 
     if (filtered.length === 0) {
@@ -887,6 +895,7 @@
           <div class="goal-meta">
             <span class="cat-tag cat-${g.category}">${catLabel(g.category)}</span>
             ${g.time ? `<span class="goal-time">⏰ ${fmt12(g.time)}</span>` : ''}
+            ${g.dueDate ? `<span class="goal-due ${!g.done && g.dueDate < TODAY ? 'overdue' : g.dueDate === TODAY ? 'due-today' : ''}">${!g.done && g.dueDate < TODAY ? '🔴 Overdue · ' : g.dueDate === TODAY ? '🟡 Due today · ' : '📅 '}${fmtDate(g.dueDate)}</span>` : ''}
             ${g.owner === 'alex' ? `<span class="goal-owner">· Set by Alex</span>` : ''}
           </div>
         </div>
@@ -1048,6 +1057,12 @@
     const [h, m] = t.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
     return `${h % 12 || 12}:${m.toString().padStart(2,'0')} ${ampm}`;
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    const [y, m, day] = d.split('-').map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   // Enter key to add
