@@ -411,13 +411,14 @@
       background: rgba(0,0,0,0.7);
       backdrop-filter: blur(6px);
       z-index: 100;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.25s;
     }
+    .modal-overlay.open { display: flex; pointer-events: all; opacity: 1; }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal {
       background: var(--surface);
@@ -910,17 +911,31 @@
   }
 
   // ── Invite Modal ───────────────────────────────────────────────────
-  function openInvite() { document.getElementById('invite-modal').classList.add('open'); }
-  function closeInvite() { document.getElementById('invite-modal').classList.remove('open'); }
+  function openInvite() {
+    const modal = document.getElementById('invite-modal');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('open'));
+  }
+  function closeInvite() {
+    const modal = document.getElementById('invite-modal');
+    modal.classList.remove('open');
+    setTimeout(() => { modal.style.display = 'none'; }, 250);
+  }
   function handleOverlayClick(e) { if (e.target === document.getElementById('invite-modal')) closeInvite(); }
 
   function copyLink() {
-    const link = document.getElementById('invite-link-input').value;
-    navigator.clipboard.writeText(link).then(() => showToast('Link copied to clipboard! 🔗')).catch(() => {
-      document.getElementById('invite-link-input').select();
-      document.execCommand('copy');
-      showToast('Link copied! 🔗');
-    });
+    const input = document.getElementById('invite-link-input');
+    const link = input.value;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(() => showToast('Link copied to clipboard! 🔗')).catch(() => fallbackCopy(input));
+    } else {
+      fallbackCopy(input);
+    }
+  }
+  function fallbackCopy(input) {
+    input.select();
+    input.setSelectionRange(0, 9999);
+    try { document.execCommand('copy'); showToast('Link copied! 🔗'); } catch { showToast('Copy the link manually'); }
   }
 
   // ── Toast ──────────────────────────────────────────────────────────
