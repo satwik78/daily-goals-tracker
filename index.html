@@ -628,9 +628,9 @@
       <span class="modal-title">Invite Friends to Collaborate</span>
       <button class="modal-close" onclick="closeInvite()">✕</button>
     </div>
-    <p>Share this link with friends so they can join your goals board and keep each other accountable.</p>
+    <p>Share this link with friends — when they open it, they'll see your goals and can add their own!</p>
     <div class="invite-link-row">
-      <input class="invite-link-input" id="invite-link-input" readonly value="https://dailygoals.app/board/abc123xyz" />
+      <input class="invite-link-input" id="invite-link-input" readonly />
       <button class="btn-copy" onclick="copyLink()">Copy Link</button>
     </div>
     <hr class="divider" />
@@ -694,6 +694,7 @@
 
   // ── Init ───────────────────────────────────────────────────────────
   function init() {
+    if (checkSharedLink()) return;
     loadGoals();
     renderDate();
     renderCollabStrip();
@@ -701,6 +702,48 @@
     updateProgress();
     updateStreak();
     buildParticles();
+  }
+
+  function checkSharedLink() {
+    const params = new URLSearchParams(window.location.search);
+    const shared = params.get('shared');
+    if (!shared) return false;
+    try {
+      const payload = JSON.parse(decodeURIComponent(escape(atob(shared))));
+      // Show read-only view of shared goals
+      document.body.innerHTML = '';
+      document.body.style.cssText = 'font-family:Inter,system-ui,sans-serif;background:#0f0f1a;color:#e8e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;';
+      const ownerName = payload.owner || 'Someone';
+      const sharedGoals = payload.goals || [];
+      const done = sharedGoals.filter(g => g.done).length;
+      document.body.innerHTML = `
+        <div style="max-width:520px;width:100%">
+          <div style="text-align:center;margin-bottom:32px">
+            <div style="font-size:2.5rem;margin-bottom:8px">🎯</div>
+            <h1 style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#4fc3f7,#ce93d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px">${escHtml(ownerName)}'s Daily Goals</h1>
+            <p style="color:#8888aa;font-size:0.85rem">${payload.date || 'Today'} · ${done}/${sharedGoals.length} completed</p>
+          </div>
+          <div style="background:#1a1a2e;border:1px solid #2a2a4a;border-radius:20px;padding:20px;margin-bottom:20px">
+            <div style="height:8px;background:#16213e;border-radius:100px;overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;width:${sharedGoals.length ? Math.round(done/sharedGoals.length*100) : 0}%;background:linear-gradient(90deg,#4fc3f7,#ce93d8);border-radius:100px;transition:width 0.6s"></div>
+            </div>
+            <p style="text-align:center;color:#ce93d8;font-size:0.8rem">${done === sharedGoals.length && sharedGoals.length > 0 ? 'All goals completed! 🎉' : `${done} of ${sharedGoals.length} goals done`}</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+            ${sharedGoals.length === 0 ? '<p style="text-align:center;color:#8888aa">No goals shared yet.</p>' :
+              sharedGoals.map(g => `
+              <div style="background:#1a1a2e;border:1px solid #2a2a4a;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;${g.done?'opacity:0.6':''}">
+                <div style="width:22px;height:22px;border-radius:7px;border:2px solid ${g.done?'transparent':'#2a2a4a'};background:${g.done?'linear-gradient(135deg,#4fc3f7,#ce93d8)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:#fff">${g.done?'✓':''}</div>
+                <div>
+                  <div style="font-size:0.9rem;font-weight:500;${g.done?'text-decoration:line-through;color:#8888aa':''}">${escHtml(g.title)}</div>
+                  <div style="font-size:0.7rem;color:#8888aa;margin-top:2px;text-transform:uppercase;letter-spacing:0.04em">${g.category}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+          <a href="${window.location.href.split('?')[0]}" style="display:block;text-align:center;padding:14px;background:linear-gradient(135deg,#4fc3f7,#ce93d8);border-radius:14px;color:#fff;font-weight:700;font-size:0.95rem;text-decoration:none">Start My Own Goals Tracker</a>
+        </div>`;
+      return true;
+    } catch { return false; }
   }
 
   function loadGoals() {
@@ -911,7 +954,15 @@
   }
 
   // ── Invite Modal ───────────────────────────────────────────────────
+  function generateInviteLink() {
+    const payload = { goals, date: TODAY, owner: 'You' };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const base = window.location.href.split('?')[0].split('#')[0];
+    return base + '?shared=' + encoded;
+  }
+
   function openInvite() {
+    document.getElementById('invite-link-input').value = generateInviteLink();
     const modal = document.getElementById('invite-modal');
     modal.style.display = 'flex';
     requestAnimationFrame(() => modal.classList.add('open'));
