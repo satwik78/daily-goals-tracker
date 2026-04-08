@@ -66,10 +66,20 @@
       width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--border);
       border-radius: 12px; color: var(--text); font-size: 0.9rem; font-weight: 600;
       cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center;
-      gap: 10px; transition: border-color 0.2s, background 0.2s;
+      gap: 10px; transition: border-color 0.2s, background 0.2s; margin-bottom: 10px;
     }
     .btn-google:hover { border-color: var(--blue); background: rgba(79,195,247,0.05); }
     .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .btn-phone {
+      width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center;
+      gap: 10px; transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-phone:hover { border-color: var(--green); background: rgba(165,214,167,0.05); }
+    .phone-row { display: flex; gap: 8px; }
+    .phone-row input { flex: 1; }
+    #recaptcha-container { margin-bottom: 12px; }
 
     .auth-error { background: rgba(239,154,154,0.1); border: 1px solid var(--red); border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: var(--red); margin-bottom: 12px; display: none; }
     .auth-error.show { display: block; }
@@ -265,6 +275,29 @@
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
         Continue with Google
       </button>
+      <button class="btn-phone" onclick="showPhoneStep1()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.92a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Continue with Phone
+      </button>
+    </div>
+
+    <!-- Phone Step 1: Enter number -->
+    <div id="form-phone-1" style="display:none">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">Enter your phone number with country code (e.g. +91 98765 43210)</p>
+      <div class="phone-row">
+        <input class="auth-input" id="phone-number" type="tel" placeholder="+91 98765 43210" style="margin-bottom:0" />
+      </div>
+      <div id="recaptcha-container"></div>
+      <button class="btn-primary" id="btn-send-otp" onclick="sendOTP()" style="margin-top:12px">Send OTP</button>
+      <button class="btn-phone" onclick="showPhoneStep1(false)" style="margin-top:8px">← Back</button>
+    </div>
+
+    <!-- Phone Step 2: Enter OTP -->
+    <div id="form-phone-2" style="display:none">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">Enter the 6-digit OTP sent to your phone.</p>
+      <input class="auth-input" id="otp-code" type="text" placeholder="Enter OTP" maxlength="6" inputmode="numeric" />
+      <button class="btn-primary" id="btn-verify-otp" onclick="verifyOTP()">Verify & Sign In</button>
+      <button class="btn-phone" onclick="showPhoneStep2(false)" style="margin-top:8px">← Back</button>
     </div>
 
     <div id="form-signup" style="display:none">
@@ -276,6 +309,10 @@
       <button class="btn-google" onclick="googleLogin()">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
         Continue with Google
+      </button>
+      <button class="btn-phone" onclick="showPhoneStep1()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.92a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Continue with Phone
       </button>
     </div>
   </div>
@@ -393,7 +430,7 @@
 <!-- Firebase SDKs -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, updateProfile }
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, updateProfile, RecaptchaVerifier, signInWithPhoneNumber }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, collection, setDoc, getDocs, deleteDoc, updateDoc, onSnapshot, query, orderBy }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -538,6 +575,66 @@
     }
   };
 
+  // ── Phone Auth ─────────────────────────────────────────────────────
+  let confirmationResult = null;
+  let recaptchaVerifier = null;
+
+  window.showPhoneStep1 = (show = true) => {
+    hideAuthError();
+    const allForms = ['form-login','form-signup','form-phone-1','form-phone-2'];
+    allForms.forEach(id => document.getElementById(id).style.display = 'none');
+    if (show) {
+      document.getElementById('form-phone-1').style.display = 'block';
+      if (!recaptchaVerifier) {
+        recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'normal' });
+        recaptchaVerifier.render();
+      }
+    } else {
+      const activeTab = document.getElementById('tab-login').classList.contains('active') ? 'form-login' : 'form-signup';
+      document.getElementById(activeTab).style.display = 'block';
+    }
+  };
+
+  window.showPhoneStep2 = (show = true) => {
+    document.getElementById('form-phone-1').style.display = show ? 'none' : 'block';
+    document.getElementById('form-phone-2').style.display = show ? 'block' : 'none';
+  };
+
+  window.sendOTP = async () => {
+    const phone = document.getElementById('phone-number').value.trim();
+    if (!phone) { showAuthError('Please enter your phone number.'); return; }
+    const btn = document.getElementById('btn-send-otp');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+      showPhoneStep2(true);
+      hideAuthError();
+    } catch (e) {
+      showAuthError(friendlyError(e.code));
+      // Reset recaptcha on error
+      recaptchaVerifier.clear();
+      recaptchaVerifier = null;
+      document.getElementById('recaptcha-container').innerHTML = '';
+      recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'normal' });
+      recaptchaVerifier.render();
+    } finally {
+      btn.disabled = false; btn.textContent = 'Send OTP';
+    }
+  };
+
+  window.verifyOTP = async () => {
+    const code = document.getElementById('otp-code').value.trim();
+    if (!code) { showAuthError('Please enter the OTP.'); return; }
+    const btn = document.getElementById('btn-verify-otp');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      await confirmationResult.confirm(code);
+    } catch (e) {
+      showAuthError(friendlyError(e.code));
+      btn.disabled = false; btn.textContent = 'Verify & Sign In';
+    }
+  };
+
   window.logout = async () => {
     closeDropdown();
     await signOut(auth);
@@ -553,6 +650,9 @@
       'auth/invalid-email': 'Please enter a valid email address.',
       'auth/weak-password': 'Password should be at least 6 characters.',
       'auth/too-many-requests': 'Too many attempts. Please try again later.',
+      'auth/invalid-phone-number': 'Invalid phone number. Use format: +91 98765 43210',
+      'auth/invalid-verification-code': 'Incorrect OTP. Please try again.',
+      'auth/code-expired': 'OTP expired. Please request a new one.',
     };
     return map[code] || 'Something went wrong. Please try again.';
   }
